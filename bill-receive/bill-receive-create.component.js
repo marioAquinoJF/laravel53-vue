@@ -1,7 +1,6 @@
 window.billReceiveCreateComponent = Vue.extend({
     template: `
-
-	<form name="form" @submit.prevent="submit">
+<form name="form" @submit.prevent="submit">
 		<label>Vencimento</label>
 		<input type='text' v-model='bill.date_due' />
 		<br/>
@@ -13,9 +12,11 @@ window.billReceiveCreateComponent = Vue.extend({
 		</select>
 		<br/>
 		<label>Valor</label>
-		<input type='text'  v-model='bill.value'/>
+		<input type='text'  v-model='bill.value'/> 
+                <br/><br/>
+                Paga: <input type='checkbox' :checked="bill.done"  v-model='bill.done'/>
 		<br/><br/>
-		<input type='submit' value='Enviar'/>                    
+		<input type='submit' value='Enviar'/>  
 	</form>	`,
 
     data: function ()
@@ -27,44 +28,50 @@ window.billReceiveCreateComponent = Vue.extend({
                 name: '',
                 value: 0,
                 done: false,
+                type: 'toReceive'
             }
         };
     },
     created: function ()
     {
-        if (this.$route.name == 'bill-receive.update') {
-            this.getBill(this.$route.params.id);
+        var self = this;
+        if (self.$route.name === 'bill-receive.update') {
+            self.getBill(self.$route.params.id);
         }
     },
     methods: {
         submit: function ()
         {
+            var self = this;
             if (this.$route.name == 'bill-receive.update') {
-                this.$root.$children[0].billsReceive[this.$route.params.id] = this.bill;
-                
+                Bill.update({type: 'toReceive', id: self.bill.id}, self.bill)
+                        .then(function (response)
+                        {
+
+                            self.$dispatch('change-info');
+                            window.router.go({name: 'bill-receive.list'});
+                        });
             } else {
-               this.$root.$children[0].billsReceive.push(this.bill);
+                Bill.save({}, self.bill)
+                        .then(function (response)
+                        {
+                            self.$dispatch('change-info');
+                            window.router.go({name: 'bill-receive.list'});
+                        });
+
             }
-            this.bill = {
-                date_due: '',
-                name: '',
-                value: 0,
-                done: 0
-            };
-            window.router.go({name: 'bill-receive.list'});
+
         },
-        getBill: function (index)
+        getBill: function (id)
         {
-            var bills = this.$root.$children[0].billsReceive;
-            this.bill = bills[index];
+            var self = this;
+            Bill.get({type: 'toReceive', id: id})
+                    .then(function (response)
+                    {
+                        self.bill = response.data;
+                    });
 
         }
 
-    },
-    events: {
-        'change-receive': function (receive)
-        {
-            this.receive = receive;
-        }
     }
 });

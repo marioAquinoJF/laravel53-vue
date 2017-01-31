@@ -1,6 +1,6 @@
 
 window.billPayCreateComponent = Vue.extend({
-    
+
     template: `
 	<form name="form" @submit.prevent="submit">
 		<label>Vencimento</label>
@@ -14,11 +14,12 @@ window.billPayCreateComponent = Vue.extend({
 		</select>
 		<br/>
 		<label>Valor</label>
-		<input type='text'  v-model='bill.value'/>
+		<input type='text'  v-model='bill.value'/> 
+                <br/><br/>
+                Paga: <input type='checkbox' :checked="bill.done"  v-model='bill.done'/>
 		<br/><br/>
-		<input type='submit' value='Enviar'/>                    
+		<input type='submit' value='Enviar'/>  
 	</form>	`,
-    propsData: ['bill'],
     data: function ()
     {
         return {
@@ -34,38 +35,49 @@ window.billPayCreateComponent = Vue.extend({
                 date_due: '',
                 name: '',
                 value: 0,
-                done: 0
+                done: 0,
+                type: 'toPay'
             }
 
         };
     },
     created: function ()
     {
-        if (this.$route.name === 'bill-pay.update') {
-            this.getBill(this.$route.params.id);
+        var self = this;
+        if (self.$route.name === 'bill-pay.update') {
+            self.getBill(self.$route.params.id);
         }
     },
     methods: {
         submit: function ()
         {
-            if (this.$route.name == 'bill-pay.update') {
-                this.$root.$children[0].billsPay[this.$route.params.id] = this.bill;
-                
+             var self = this;
+            if (self.$route.name == 'bill-pay.update') {
+                Bill.update({type:'toPay',id: self.bill.id}, self.bill)
+                        .then(function (response)
+                        {
+
+                            self.$dispatch('change-info');
+                            window.router.go({name: 'bill-pay.list'});
+                        });
             } else {
-                this.$root.$children[0].billsPay.push(this.bill);
+               Bill.save({}, self.bill)
+                        .then(function (response)
+                        {
+
+                            self.$dispatch('change-info');
+                            window.router.go({name: 'bill-pay.list'});
+                        });
             }
-            this.bill = {
-                date_due: '',
-                name: '',
-                value: 0,
-                done: 0
-            };
-            window.router.go({name: 'bill-pay.list'});
         },
-        getBill: function (index)
+        getBill: function (id)
         {
-            var bills = this.$root.$children[0].billsPay;
-            this.bill = bills[index];
+             var self = this;
+            Bill.get({type:'toPay',id: id})
+                    .then(function (response)
+                    {
+                        self.bill = response.data;
+                    });
 
         }
     }

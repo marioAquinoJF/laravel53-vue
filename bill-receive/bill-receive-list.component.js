@@ -9,30 +9,28 @@ window.billReceiveListComponent = Vue.extend({
 				<th>Valor</th>
 				<th>Status</th>
 				<th>Ações</th>
-				<th> Dar baixa</th>
+				
 			</tr>
 		</thead>
 		<tbody>
 			<tr v-for='(index,o) in bills'>
-				<td>{{index}}</td>
+				<td>{{o.id}}</td>
 				<td>{{o.date_due}}</td>
 				<td>{{o.name}}</td>
 				<td>{{ o.value | currency }}</td>
 				<td class='my-class' :class="{'text-info':o.done, 'text-danger': !o.done}"><b>{{ o.done ? "Paga" : 'Não Paga' }}</b></td>
 				<td>
 					<span>
-						<a v-link="{ name: 'bill-receive.update', params:{id:index} }">Editar</a> 
+						<a v-link="{ name: 'bill-receive.update', params:{id:o.id} }">Editar</a> 
 					</span>
                                         |
 					<span>
-						<a href="#" @click.prevent="delBill(index)">
+						<a href="#" @click.prevent="delBill(o)">
 							Apagar
 						</a>
 					</span>
 				</td>							
-				<td>
-				<input type='checkbox' :checked="o.done" @change.prevent="changeState(o)"/>
-				</td>
+				
 			</tr>
 		</tbody>
 	</table>
@@ -43,18 +41,31 @@ window.billReceiveListComponent = Vue.extend({
             bills: this.$root.$children[0].billsReceive
         };
     },
+    created: function ()
+    {
+        var self = this;
+        Bill.query({type:'toReceive'})
+                .then(function (response)
+                {
+                    self.bills = response.data;
+
+                });
+    },
     methods: {
-        delBill: function (index)
+        delBill: function (bill)
         {
+            var self = this;
             var r = confirm("Deseja excluir esta conta?");
             if (r == true) {
-                this.$root.$children[0].billsReceive.splice(index, 1);                
+                
+                Bill.delete({id:bill.id})
+                        .then(function (response)
+                        {
+                            self.bills.$remove(bill);
+                            self.$dispatch('change-info');
+                        })
             }
 
-        },
-        changeState: function (o)
-        {
-            o.done = !o.done;
         }
     }
 });

@@ -77,17 +77,36 @@ window.dashboardComponent = Vue.extend({
     components: {
         'bill-component': billComponent
     },
+    created: function(){
+        this.getBills();
+    },
     data: function () {
         return {
             title: "Resumo",
+            billsPay: null,
+            billsReceive: null,
         }
     },
     methods:{
+        getBills: function(){
+            var self = this;
+            Bill.query({type:'toPay'})
+                      .then(function (response)
+                      {
+                          self.billsPay = response.data;
+
+                      }); 
+            Bill.query({type:'toReceive'})
+                  .then(function (response)
+                  {
+                     self.billsReceive = response.data;
+                  });
+        },
         getResume : function () {
-            var billsPay = this.billsSum( this.$root.$children[0].billsPay, true);
-            var billsPayTotal = this.billsTotal( this.$root.$children[0].billsPay);
-            var billsReceive = this.billsSum( this.$root.$children[0].billsReceive, true);
-            var billsReceiveTotal = this.billsTotal( this.$root.$children[0].billsReceive);
+            var billsPay = this.billsSum( this.billsPay, true);
+            var billsPayTotal = this.billsTotal( this.billsPay);
+            var billsReceive = this.billsSum( this.billsReceive, true);
+            var billsReceiveTotal = this.billsTotal( this.billsReceive);
             var resume = {
               billsPay:{
                   total: billsPayTotal.total,
@@ -111,7 +130,7 @@ window.dashboardComponent = Vue.extend({
             var total = 0;
             for(var i in bills){
                 if(bills[i].done === done){
-                    sum += bills[i].value;
+                    sum += parseFloat(bills[i].value);
                     total++;
                 }
             }
@@ -121,7 +140,7 @@ window.dashboardComponent = Vue.extend({
             var sum = 0;
             var total =  bills.length;
             for(var i in bills){
-                sum += bills[i].value;
+                sum += parseFloat(bills[i].value);
             }
             return {sum:sum, total:total};
         }

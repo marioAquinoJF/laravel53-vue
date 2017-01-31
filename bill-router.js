@@ -47,6 +47,6 @@ router.map({
 
     router.start({
         components: {
-            'main-component': mainComponent
+             'bill-component': billComponent
         }
     }, '#app');
